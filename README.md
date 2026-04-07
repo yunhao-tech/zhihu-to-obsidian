@@ -27,15 +27,24 @@
    Markdown 文件中直接保留原始的 `zhimg.com` 链接，不进行实际下载。
 3. **Tailscale 私用云模式 (Tailscale)**：
    适用于拥有独立长亮存储设备（如旁路由、Mac Mini、NAS）并使用 [Tailscale](https://tailscale.com/) 异地内网组网管理 Vault 分离知识库的用户。
-   - **机制**：在此模式下，图片实体仍会被打包进下载内容的 `attachments/` 文件夹中。但各个导出的 `.md` 文档在引用其图片时，将写入带有局域网地址的绝对路径。
-   - **示例工作流**：在插件输入框填写你的基础 URL `http://mac-mini:8080/zhihu_imgs`，导出的某篇 Markdown 图片格式会被组织为：
-     `![img](http://mac-mini:8080/zhihu_imgs/知乎-某专栏/attachments/v2-xxx.jpg)`
-   - 用户只需将解压得到的 `知乎-某专栏` 原封不动复制进 Mac Mini 的该服务端路径下，便能做到**多端移动设备（手机/平板中的 Obsidian）轻量化秒开查阅，同时又免建公有了图床**。
+   - **机制**：在此模式下，导出的ZIP包含两个独立文件夹：
+     - `专栏名称/`：仅包含Markdown文件，图片链接为Tailscale局域网绝对路径，可直接拖入Obsidian使用
+     - `tailscale-assets/`：包含完整路径的图片资源，直接上传到Tailscale服务根目录即可
+   - **自动中文编码**：中文专栏名称会自动进行URL编码，确保链接有效性
+   - **示例工作流**：
+     1. 在插件输入框填写你的Tailscale服务基础URL，例如 `http://mac-mini:8080`
+     2. 导出的Markdown中图片链接格式为：
+        `![img](http://mac-mini:8080/%E7%9F%A5%E4%B9%8E-%E6%9F%90%E4%B8%93%E6%A0%8F/attachments/v2-xxx.jpg)`
+     3. 使用方式：
+        - 将`知乎-某专栏`文件夹直接拖入Obsidian库
+        - 将`tailscale-assets`文件夹内的`知乎-某专栏`文件夹上传到Mac Mini的Tailscale服务根目录
+     4. 无需任何额外配置，即可实现**多端移动设备（手机/平板中的Obsidian）轻量化秒开查阅，同时免建公有图床**。
 
 ---
 
 ## 目录结构说明
 
+### 普通模式（Local/Remote）
 导出的整个 ZIP 会以 `知乎-文章标题`（单篇）或 `知乎-专栏标题`（批量）命名。解压后的常见组织方式如下：
 
 ```text
@@ -45,6 +54,21 @@
 │   └── v2-bbb222.png
 ├── 进程与线程的区别.md
 └── 深入理解虚拟内存.md
+```
+
+### Tailscale 模式
+Tailscale模式下导出的ZIP包含两个独立顶层文件夹，分别用于Obsidian导入和服务器部署：
+
+```text
+知乎-计算机底层原理.zip
+├── 知乎-计算机底层原理/          # 直接拖入Obsidian库
+│   ├── 进程与线程的区别.md
+│   └── 深入理解虚拟内存.md
+└── tailscale-assets/            # 将里面的内容上传到Tailscale服务根目录
+    └── 知乎-计算机底层原理/
+        └── attachments/
+            ├── v2-aaa111.jpg
+            └── v2-bbb222.png
 ```
 
 ## 安装与使用

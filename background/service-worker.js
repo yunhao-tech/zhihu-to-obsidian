@@ -49,11 +49,24 @@ async function downloadSingleFile(filename, content) {
 /* ── ZIP 打包下载 ──────────────────────────────────── */
 async function handleZipDownload(files, options, folderName) {
   const zip = new JSZip();
-  const folder = zip.folder(folderName);
+  const isTailscaleMode = options.imageMode === 'tailscale';
+
+  // 根据模式选择不同的文件夹结构
+  let mdFolder, attachmentsFolder;
+  if (isTailscaleMode) {
+    // Tailscale模式：两个顶层文件夹
+    mdFolder = zip.folder(folderName); // md文件夹以专栏名称命名
+    attachmentsFolder = zip.folder('tailscale-assets').folder(folderName).folder('attachments');
+  } else {
+    // 普通模式：单一根文件夹
+    const rootFolder = zip.folder(folderName);
+    mdFolder = rootFolder;
+    attachmentsFolder = rootFolder.folder('attachments');
+  }
 
   // 添加 Markdown 文件
   for (const f of files) {
-    folder.file(f.filename, f.content);
+    mdFolder.file(f.filename, f.content);
   }
 
   // 下载图片（如果需要本地化）
@@ -87,9 +100,7 @@ async function handleZipDownload(files, options, folderName) {
         });
         if (resp.ok) {
           const buf = await resp.arrayBuffer();
-
-          // 无论是 local 还是 tailscale 模式，在 ZIP 中都统一存放到 attachments/ 目录
-          folder.folder('attachments').file(img.filename, buf);
+          attachmentsFolder.file(img.filename, buf);
         }
       } catch (e) {
         console.warn(`[zhihu-export] 图片下载失败: ${img.url}`, e);
