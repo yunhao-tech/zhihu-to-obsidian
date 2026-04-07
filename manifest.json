@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "知乎 → Obsidian",
+  "version": "1.0.0",
+  "description": "将知乎专栏文章批量导出为 Obsidian 兼容的 Markdown 格式",
+  "permissions": [
+    "activeTab",
+    "downloads"
+  ],
+  "host_permissions": [
+    "https://*.zhihu.com/*",
+    "https://*.zhimg.com/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://zhuanlan.zhihu.com/*",
+        "https://www.zhihu.com/*"
+      ],
+      "js": ["lib/converter.js", "content/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>知乎 → Obsidian</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app">
+    <!-- 头部 -->
+    <header class="header">
+      <div class="logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <rect width="28" height="28" rx="8" fill="url(#g1)"/>
+          <path d="M8 9h5v10H8V9zm7 0h5l-2 4h3l-6 6 1-4h-3l2-6z" fill="#fff" fill-opacity=".95"/>
+          <defs><linearGradient id="g1" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+        </svg>
+        <div class="logo-text">
+          <span class="logo-title">知乎 → Obsidian</span>
+          <span class="logo-sub">Markdown 导出工具</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 状态检测 -->
+    <section id="detect-section" class="section">
+      <div class="status-card" id="status-card">
+        <div class="status-icon spin" id="status-icon">⟳</div>
+        <div class="status-text" id="status-text">正在检测页面…</div>
+      </div>
+    </section>
+
+    <!-- 未检测到知乎页面 -->
+    <section id="not-zhihu" class="section hidden">
+      <div class="empty-state">
+        <div class="empty-icon">📄</div>
+        <p>请在知乎文章或专栏页面使用此插件</p>
+      </div>
+    </section>
+
+    <!-- 导出选项 -->
+    <section id="export-section" class="section hidden">
+      <!-- 当前页面信息 -->
+      <div class="info-card" id="page-info">
+        <div class="info-row">
+          <span class="info-label">文章</span>
+          <span class="info-value" id="info-title">—</span>
+        </div>
+        <div class="info-row" id="column-row" style="display:none">
+          <span class="info-label">专栏</span>
+          <span class="info-value" id="info-column">—</span>
+        </div>
+      </div>
+
+      <!-- 导出范围 -->
+      <div class="option-group">
+        <div class="option-label">导出范围</div>
+        <label class="radio-card" id="radio-single">
+          <input type="radio" name="scope" value="single" checked>
+          <span class="radio-mark"></span>
+          <span class="radio-text">仅当前文章</span>
+        </label>
+        <label class="radio-card" id="radio-column">
+          <input type="radio" name="scope" value="column">
+          <span class="radio-mark"></span>
+          <span class="radio-text">整个专栏<span class="badge" id="column-count"></span></span>
+        </label>
+        <label class="radio-card" id="radio-range">
+          <input type="radio" name="scope" value="range">
+          <span class="radio-mark"></span>
+          <span class="radio-text">自定义范围</span>
+        </label>
+
+        <!-- 自定义范围输入 -->
+        <div class="range-inputs hidden" id="range-inputs">
+          <div class="range-field">
+            <label>起始</label>
+            <input type="number" id="range-start" min="1" value="1" class="num-input">
+          </div>
+          <span class="range-sep">—</span>
+          <div class="range-field">
+            <label>结束</label>
+            <input type="number" id="range-end" min="1" value="10" class="num-input">
+          </div>
+        </div>
+      </div>
+
+      <!-- 图片处理 -->
+      <div class="option-group">
+        <div class="option-label">图片处理</div>
+        <div class="image-options">
+          <label class="radio-pill">
+            <input type="radio" name="imageMode" value="local" checked>
+            <span class="pill-text">📥 下载到本地</span>
+          </label>
+          <label class="radio-pill">
+            <input type="radio" name="imageMode" value="remote">
+            <span class="pill-text">🔗 保留远程链接</span>
+          </label>
+          <label class="radio-pill">
+            <input type="radio" name="imageMode" value="tailscale">
+            <span class="pill-text">🌐 Tailscale</span>
+          </label>
+        </div>
+
+        <!-- Tailscale 配置 -->
+        <div class="tailscale-config hidden" id="tailscale-config">
+          <input type="text" id="tailscale-url" class="text-input"
+                 placeholder="http://100.x.x.x:8080/images" value="">
+          <span class="input-hint">Mac Mini 上的静态文件服务地址</span>
+        </div>
+      </div>
+
+      <!-- 导出按钮 -->
+      <button class="btn-export" id="btn-export">
+        <span class="btn-icon">⬇</span>
+        <span class="btn-text">开始导出</span>
+      </button>
+    </section>
+
+    <!-- 进度 -->
+    <section id="progress-section" class="section hidden">
+      <div class="progress-card">
+        <div class="progress-header">
+          <span class="progress-status" id="progress-status">导出中…</span>
+          <span class="progress-count" id="progress-count">0/0</span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-title" id="progress-title">准备中…</div>
+      </div>
+    </section>
+
+    <!-- 完成 -->
+    <section id="done-section" class="section hidden">
+      <div class="done-card">
+        <div class="done-icon">✅</div>
+        <div class="done-text" id="done-text">导出完成！</div>
+        <button class="btn-secondary" id="btn-reset">继续导出</button>
+      </div>
+    </section>
+
+    <!-- 错误 -->
+    <section id="error-section" class="section hidden">
+      <div class="error-card">
+        <div class="error-icon">❌</div>
+        <div class="error-text" id="error-text">导出失败</div>
+        <button class="btn-secondary" id="btn-retry">重试</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
