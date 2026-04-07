@@ -50,9 +50,14 @@
 ## 安装与使用
 
 ### 安装
-1. 通过 GitHub 或直接 clone/下载本项目存放本地。
-2. 打开 Chrome，地址栏敲入 `chrome://extensions/` 并在右上角开启 **「开发者模式」**。
-3. 点击 **「加载已解压的扩展程序」**，指向 `zhihu_obsidian` 根目录。
+
+本项目采用本地加载的方式免费自由使用，无需等待商店审核：
+
+1. 前往 [**Releases 页面**](https://github.com/yunhao-tech/zhihu-to-obsidian/releases) 下载最新的 `zhihu-obsidian-vX.X.X.zip` 打包文件。（首发版本链接：[**v1.0.0**](https://github.com/yunhao-tech/zhihu-to-obsidian/releases/tag/v1.0.0)）
+2. 将下载好的 ZIP 压缩包解压为你本地电脑上的一个常规目录（请将其放在一个不会被轻易清理的安全路径下）。
+3. 打开 Chrome，地址栏敲入 `chrome://extensions/` 回车进入扩展程序管理页，并在右上角开启 **「开发者模式」** 开关。
+4. 点击顶部栏出现的 **「加载已解压的扩展程序」**，然后精准指向并选择你刚才解压出来的文件夹。
+5. 加载完成后，建议点击浏览器右上方的拼图图标将该插件执行 **「固定 (Pin)」**，以便常驻调用。
 
 ### 导出
 1. 在网页端登录并打开期望导出的 **知乎文章页** / **专栏页**。
