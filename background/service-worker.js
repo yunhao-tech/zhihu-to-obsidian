@@ -96,7 +96,7 @@ async function handleZipDownload(files, options, folderName) {
 
         const imgUrl = img.url.startsWith('//') ? 'https:' + img.url : img.url;
         const resp = await fetch(imgUrl, {
-          headers: { Referer: 'https://zhuanlan.zhihu.com/' },
+          headers: { Referer: img.referrer || 'https://zhuanlan.zhihu.com/' },
         });
         if (resp.ok) {
           const buf = await resp.arrayBuffer();

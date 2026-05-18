@@ -5,6 +5,80 @@
 (function () {
   'use strict';
 
+  const PLATFORMS = {
+    zhihu: {
+      name: '知乎',
+      hosts: [/(\.|^)zhihu\.com$/],
+      title: ['.Post-Title', 'h1'],
+      author: ['.AuthorInfo-name a', '.UserLink-link'],
+      content: ['.Post-RichText', '.RichText.ztext.Post-RichText', '.RichContent-inner .RichText'],
+    },
+    wechat: {
+      name: '微信公众号',
+      hosts: [/^mp\.weixin\.qq\.com$/],
+      title: ['#activity-name', 'h1'],
+      author: ['#js_name', '.rich_media_meta_text'],
+      content: ['#js_content'],
+    },
+    juejin: {
+      name: '掘金',
+      hosts: [/(\.|^)juejin\.cn$/],
+      title: ['.article-title', 'h1'],
+      author: ['.author-info-box .username', '.author-name', '[itemprop="author"]'],
+      content: ['.markdown-body', '.article-content', 'article'],
+    },
+    csdn: {
+      name: 'CSDN',
+      hosts: [/(\.|^)csdn\.net$/],
+      title: ['#articleContentId', '.title-article', 'h1'],
+      author: ['.follow-nickName', '.user-name', '.blog_nickname'],
+      content: ['#content_views', 'article'],
+    },
+    cnblogs: {
+      name: '博客园',
+      hosts: [/(\.|^)cnblogs\.com$/],
+      title: ['#cb_post_title_url', '.postTitle a', 'h1'],
+      author: ['#profile_block a', '.postDesc a'],
+      content: ['#cnblogs_post_body', '.postBody', 'article'],
+    },
+    sspai: {
+      name: '少数派',
+      hosts: [/(\.|^)sspai\.com$/],
+      title: ['h1'],
+      author: ['.nickname', '[class*="author"] a'],
+      content: ['article', '.article-body', '[class*="article"]'],
+    },
+    jianshu: {
+      name: '简书',
+      hosts: [/^www\.jianshu\.com$/],
+      title: ['h1'],
+      author: ['._1OhGeD', '._2_Q43A', '[class*="author"] a'],
+      content: ['article', '._2rhmJa'],
+    },
+  };
+
+  function currentPlatform() {
+    const host = location.hostname;
+    return Object.entries(PLATFORMS).find(([, p]) => p.hosts.some(r => r.test(host))) || null;
+  }
+
+  function firstText(selectors, root = document) {
+    for (const sel of selectors) {
+      const el = root.querySelector(sel);
+      const text = el?.textContent?.trim();
+      if (text) return text.replace(/\s+/g, ' ');
+    }
+    return '';
+  }
+
+  function firstElement(selectors, root = document) {
+    for (const sel of selectors) {
+      const el = root.querySelector(sel);
+      if (el && el.textContent.trim().length > 80) return el;
+    }
+    return null;
+  }
+
   /* ── 页面类型检测 ────────────────────────────────── */
   function detectPageType() {
     const url = location.href;
@@ -12,23 +86,50 @@
     if (/zhihu\.com\/column\//.test(url) || /zhuanlan\.zhihu\.com\/[a-zA-Z][\w-]*\/?$/.test(url))
       return 'column';
     if (/zhihu\.com\/question\/\d+\/answer\/\d+/.test(url)) return 'answer';
+    if (getArticleContainer()) return 'webArticle';
     return 'unknown';
+  }
+
+  function getArticleContainer() {
+    const platformEntry = currentPlatform();
+    if (platformEntry) {
+      const el = firstElement(platformEntry[1].content);
+      if (el) return el;
+    }
+    const selectors = [
+      'article',
+      'main article',
+      '.article',
+      '.article-content',
+      '.post-content',
+      '.entry-content',
+      '.markdown-body',
+      '[itemprop="articleBody"]',
+    ];
+    return firstElement(selectors);
   }
 
   /* ── 文章元数据提取 ──────────────────────────────── */
   function extractMeta() {
+    const platformEntry = currentPlatform();
+    const platform = platformEntry?.[1];
     const title =
+      (platform ? firstText(platform.title) : '') ||
       document.querySelector('.Post-Title')?.textContent?.trim() ||
       document.querySelector('h1')?.textContent?.trim() ||
       document.title.replace(/ - 知乎$/, '');
     const author =
+      (platform ? firstText(platform.author) : '') ||
+      document.querySelector('meta[name="author"]')?.getAttribute('content')?.trim() ||
       document.querySelector('.AuthorInfo-name a')?.textContent?.trim() ||
       document.querySelector('.UserLink-link')?.textContent?.trim() || '';
     const dateEl = document.querySelector('.ContentItem-time') ||
-                   document.querySelector('.Post-time');
+                   document.querySelector('.Post-time') ||
+                   document.querySelector('time') ||
+                   document.querySelector('[datetime]');
     let created = '', updated = '';
     if (dateEl) {
-      const t = dateEl.textContent;
+      const t = dateEl.getAttribute('datetime') || dateEl.textContent;
       const pm = t.match(/发布于\s*([\d-]+)/);
       const em = t.match(/编辑于\s*([\d-]+)/);
       if (pm) created = pm[1];
@@ -43,7 +144,16 @@
     const column =
       document.querySelector('.ColumnPageHeader-Title')?.textContent?.trim() ||
       document.querySelector('.Post-Header .css-1gomreu')?.textContent?.trim() || '';
-    return { title, author, created, updated, tags, column, url: location.href };
+    return {
+      title,
+      author,
+      created,
+      updated,
+      tags,
+      column,
+      platform: platform?.name || '网页',
+      url: location.href,
+    };
   }
 
   /* ── Frontmatter 生成 ────────────────────────────── */
@@ -53,11 +163,13 @@
     fm += `title: ${esc(m.title)}\n`;
     if (m.author) fm += `author: ${esc(m.author)}\n`;
     fm += `source: ${esc(m.url)}\n`;
+    if (m.platform) fm += `platform: ${esc(m.platform)}\n`;
     if (m.created) fm += `created: ${m.created}\n`;
     if (m.updated) fm += `updated: ${m.updated}\n`;
     if (m.column) fm += `column: ${esc(m.column)}\n`;
-    fm += 'tags:\n  - 知乎\n';
-    m.tags.forEach(t => { fm += `  - ${t}\n`; });
+    fm += 'tags:\n  - 网页归档\n';
+    if (m.platform && m.platform !== '知乎') fm += `  - ${m.platform}\n`;
+    (m.tags || []).forEach(t => { fm += `  - ${t}\n`; });
     fm += '---\n\n';
     return fm;
   }
@@ -69,13 +181,10 @@
 
   /* ── 单篇导出（当前页面 DOM） ────────────────────── */
   function exportCurrentArticle(options, columnTitle) {
-    const container =
-      document.querySelector('.Post-RichText') ||
-      document.querySelector('.RichText.ztext.Post-RichText') ||
-      document.querySelector('.RichContent-inner .RichText');
+    const container = getArticleContainer();
     if (!container) throw new Error('找不到文章内容');
     const meta = extractMeta();
-    const folderName = `知乎-${safeName(columnTitle || meta.column || meta.title)}`;
+    const folderName = `${safeName(meta.platform || '网页')}-${safeName(columnTitle || meta.column || meta.title)}`;
     const conv = new ZhihuMarkdownConverter({
       imageMode: options.imageMode || 'local',
       tailscaleBase: options.tailscaleBase || '',
@@ -289,7 +398,8 @@
               document.title.replace(/ - 知乎$/, '');
           }
 
-          return reply({ ok: true, pageType, columnInfo, articleTitle });
+          const platform = currentPlatform()?.[1]?.name || '网页';
+          return reply({ ok: true, pageType, columnInfo, articleTitle, platform });
         }
 
         if (msg.action === 'exportSingle') {

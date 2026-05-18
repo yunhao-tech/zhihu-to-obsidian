@@ -34,8 +34,6 @@
       currentTabId = tab.id;
 
       // 确保 content script 已注入
-      if (!tab.url?.includes('zhihu.com')) return show('notZhihu');
-
       const resp = await sendToContent({ action: 'detectPage' });
       if (!resp?.ok) return show('notZhihu');
       if (resp.pageType === 'unknown') return show('notZhihu');
@@ -52,6 +50,7 @@
       } else {
         // 文章页面：显示文章+专栏
         $('info-title').textContent = resp.articleTitle || '—';
+        $('info-title').closest('.info-row').querySelector('.info-label').textContent = resp.platform || '文章';
         if (columnInfo) {
           $('column-row').style.display = '';
           $('info-column').textContent = columnInfo.title || columnInfo.id;

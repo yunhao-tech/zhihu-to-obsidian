@@ -1,15 +1,30 @@
 {
   "manifest_version": 3,
-  "name": "知乎 → Obsidian",
-  "version": "1.0.0",
-  "description": "将知乎专栏文章批量导出为 Obsidian 兼容的 Markdown 格式",
+  "name": "中文网页 → Obsidian",
+  "version": "1.1.0",
+  "description": "将知乎、微信、掘金、CSDN、博客园等中文知识网页导出为 Obsidian 兼容 Markdown",
   "permissions": [
     "activeTab",
     "downloads"
   ],
   "host_permissions": [
     "https://*.zhihu.com/*",
-    "https://*.zhimg.com/*"
+    "https://*.zhimg.com/*",
+    "https://mp.weixin.qq.com/*",
+    "https://juejin.cn/*",
+    "https://*.csdn.net/*",
+    "https://*.cnblogs.com/*",
+    "https://sspai.com/*",
+    "https://www.jianshu.com/*",
+    "https://mmbiz.qpic.cn/*",
+    "https://mmbiz.qlogo.cn/*",
+    "https://p3-juejin.byteimg.com/*",
+    "https://p6-juejin.byteimg.com/*",
+    "https://p9-juejin.byteimg.com/*",
+    "https://img-blog.csdnimg.cn/*",
+    "https://images.cnblogs.com/*",
+    "https://cdnfile.sspai.com/*",
+    "https://upload-images.jianshu.io/*"
   ],
   "action": {
     "default_popup": "popup/popup.html",
@@ -26,7 +41,13 @@
     {
       "matches": [
         "https://zhuanlan.zhihu.com/*",
-        "https://www.zhihu.com/*"
+        "https://www.zhihu.com/*",
+        "https://mp.weixin.qq.com/*",
+        "https://juejin.cn/*",
+        "https://*.csdn.net/*",
+        "https://*.cnblogs.com/*",
+        "https://sspai.com/*",
+        "https://www.jianshu.com/*"
       ],
       "js": ["lib/converter.js", "content/content.js"],
       "run_at": "document_idle"
